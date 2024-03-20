@@ -22,6 +22,7 @@ def importing_film(fname):
         return df
     except Exception as e:
         logging.error(f'Error importing Excel: {str(e)}')
+        raise e
 
 # Cleaning Excel file    
 def cleaning_df(df):
@@ -62,6 +63,7 @@ def scraping(df, start, stop):
         return lista
     except Exception as e:
         logging.error(f'Error scraping genre and actors: {str(e)}')
+        raise e
       
 # Scrape duration
 def scraping_duration(df):
@@ -89,6 +91,7 @@ def scraping_duration(df):
         return lista
     except Exception as e:
         logging.error(f'Error scraping duration: {str(e)}')  
+        raise e
     
 #clean what we scraped
 def cleaning_string_new(df_variable):
@@ -115,6 +118,7 @@ def cleaning_string_new(df_variable):
             logging.info(f'Cleaned string data for index {i}')
         except Exception as e:
             logging.error(f'Error cleaning string data for index {i}: {str(e)}')
+            raise e
     return df_variable
 
 def cleaning_string(df_variable):
