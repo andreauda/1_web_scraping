@@ -85,5 +85,5 @@ generi_file.close()
 
 ### contiamo il numero di attori ###
 directory_output = 'C://Users//Utente//Dropbox//Culture//Film//other//txt_output//'
-from other.conta_parole import count_words
+from conta_parole import count_words
 count_words(directory_output+'testoattori_senzaaccenti.txt')
