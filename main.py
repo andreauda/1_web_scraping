@@ -2,7 +2,8 @@
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
-# Non ci rompere il cazzo, grazie
+import re
+# drop warning
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -10,74 +11,58 @@ warnings.filterwarnings('ignore')
 def importing_film(fname):
     try:
         df = pd.read_excel(fname, skiprows=1) 
-        '''
-        ritorna df! 
-        importante perché le funzioni sotto dipendono da questa
-        '''
         return df
     except:
-        print('Porco Dio! Qualcosa non funziona qui!')
+        print('Something not working in importing Excel File')
 
 #Cleaning dataset    
 def cleaning_df(df):
-    '''
-    df.drop(columns=['Id'], inplace=True)
-    Se scrivessi:
-    df = df.drop(columns=['Id'], inplace=True)
-    cambierebbe il df-type da dataframe  a nonetype
-    di conseguenza crasherebbe qui sotto
-    (ora ho tolto sta colonna)
-    '''
-    #sostituisco lo spazio con l'underscore
+    #no space, but underscore
     for i in range(len(df.Titolo)):
         df.Titolo[i] = df.Titolo[i].replace(' ', '_')
-    #a volte ho l'underscore alla fine (perché prima avevo lo spazio), lo rimuovo 
+    #removing the final underscore
     for i in range(len(df)):
         if df.Titolo[i][-1:] == '_':
             df.Titolo[i] = df.Titolo[i][:-1]
     return df
 
-#Scrape genere e attori
+#Scraping genre and actors
 def scraping(df, start, stop):
-    '''
-    start: gratta da ...
-    stop: fino a...
-    '''
     lista = []
     for i in range(len(df)):
         url = "https://it.wikipedia.org/wiki/"+ df.Titolo[i] 
-        #requests.get per recuperare il contenuto HTML non elaborato
+        #requests.get to retrieve the raw HTML content
         html_content = requests.get(url).text 
-        #analizza il contenuto html
+        #parses html content
         soup = BeautifulSoup(html_content, "lxml") 
-        #trasforma il contenuto HTML in formato stringa
+        #transforms HTML content into string format
         text = soup.prettify()
-        #da qui lo tratto come stringa
+        #from here onward it's a string
         try: 
             text = text.split(start)[1].split(stop)[0] 
-        #se non trovi nulla lascia bianco e ciaone
+        #if nothing is retrieved go on
         except:
             text = ' '
-        #da stringa a lista
+        #from string to list
         text = text.split('href') 
-        #togli il primo valore che non c'entra un cazzo
+        #remove the first value that has nothing to do with it
         text = text[1:]
-        #pulisci
+        #clean
         try: 
             for i in range(len(text)-1):
-                #da title=" a " 
+                #from title=" a " 
                 text[i] = text[i].split('\n')[1].split('\n')[0] 
         except: 
             text = ' '
-        #appendi i valori
+        #append values
         lista.append(text)
     return lista 
     
-#Grattare la durata del film
+#scrape duration
 def scraping_duration(df):
     '''
-    è più semplice di scraping perché devi estrarre 
-    un solo valore (un numero) e non una lista
+    it's easier than scraping because you have to extract
+    a single value (a number) and not a list
     '''
     lista = []
     for i in range(len(df)):
@@ -87,29 +72,45 @@ def scraping_duration(df):
         text = soup.prettify()
         try:
             text = text.split('Durata')[1].split("min")[0]
-            #estrai il numero all'interno della stringa
+            #extract the number inside the string
             text = [int(s) for s in text.split() if s.isdigit()] 
-            #prima era lista, trasformalo in int
+            #before it was list, turn it into int
             text = text[0]
         except:
             text = ' '
-        #appendi l'int che hai estratto sopra
+        #append the int you extracted above
         lista.append(text)
     return lista
     
-#Puliamo ciò che abbiamo grattato da Wiki
+#clean what we scraped
 def cleaning_string(df_variable):
     '''
-    ripuliamo la maxi stringa di attori e generi
+    let's clean up the maxi string of actors and genres
     
-    inserisci quale variabile (attori o genere) del df vuoi pulire
-    la durata è già a posto
+     enter which variable (actors or genre) of the df you want to clean
+     the duration is already in place   
     '''
-    #segni che devono essere tolti (CAZZO, ESISTE UN METODO MIGLIORE, DATTI UNA SVEGLIA!)
+    #signs that need to be removed (THERE IS A BETTER METHOD)
     da_pulire = ["[", "]", ".", " ", "=", "/", "'", '"', '-']
     for i in range(len(df_variable)):
         for segni in da_pulire:
             df_variable[i] = str(df_variable[i]).replace(str(segni), "")
     
-    
-    
+def cleaning_string_new(df_variable):
+    '''
+    Clean up the string data in the DataFrame variable.
+
+    Args:
+    df_variable (DataFrame): DataFrame containing string data to be cleaned.
+
+    Returns:
+    DataFrame: DataFrame with cleaned string data.
+    '''
+    for i in range(len(df_variable)):
+        # Remove unwanted characters using regular expressions
+        df_variable[i] = re.sub(r'[\[\].=/\'\"-]', '', str(df_variable[i]))
+        # Remove extra spaces
+        df_variable[i] = re.sub(r'\s+', ' ', df_variable[i])
+        # Strip leading and trailing spaces
+        df_variable[i] = df_variable[i].strip()
+    return df_variable
